@@ -60,24 +60,65 @@
             position: relative;
         }
 
-        /* FILTRO CRT MÁGICO (Scanlines e Vinheta de Monitor de Tubo) */
+        /* FILTRO CRT (Scanlines e Vinheta de Monitor de Tubo) */
         .emulator-wrapper::after {
             content: " ";
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            /* Cria as linhas horizontais pretas bem finas e um efeito de sombra nas bordas da tela */
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), 
                         radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.75) 100%);
             background-size: 100% 4px, 100% 100%;
             z-index: 999;
-            pointer-events: none; /* Deixa os cliques passarem direto para o jogo */
+            pointer-events: none;
             opacity: 0.85;
         }
 
         #game {
             width: 100%;
             height: 100%;
+        }
+
+        /* Tela de Capa / Botão de Iniciar Obligatório pelo Navegador */
+        #start-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #121214;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        #start-overlay:hover .start-btn {
+            background-color: #ffcc00;
+            color: #0f0f12;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+        }
+
+        .start-btn {
+            background-color: #24242b;
+            color: #ffcc00;
+            border: 2px solid #ffcc00;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .start-hint {
+            color: #575765;
+            font-size: 0.8rem;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -88,6 +129,12 @@
         <div class="subtitle">MS-DOS Demo Version Preservation</div>
 
         <div class="emulator-wrapper">
+            
+            <div id="start-overlay" onclick="iniciarJogo()">
+                <button class="start-btn">🕹️ INICIAR DEMO</button>
+                <div class="start-hint">Clique para carregar o WebAssembly e liberar o som</div>
+            </div>
+
             <div id="game"></div>
         </div>
     </div>
@@ -99,9 +146,18 @@
         EJS_gameUrl = 'rayman_demo.zip'; 
         EJS_startOnLoaded = true;
         EJS_dosConfig = "[autoexec]\nmount c .\nc:\nRAYMAN.EXE\n";
+
+        // Função que injeta o script do emulador apenas APÓS o clique do usuário
+        function iniciarJogo() {
+            // Esconde a tela de overlay
+            document.getElementById('start-overlay').style.display = 'none';
+            
+            // Cria e injeta o script do EmulatorJS dinamicamente de forma segura
+            const script = document.createElement('script');
+            script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+            document.body.appendChild(script);
+        }
     </script>
-    
-    <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
 
 </body>
 </html>
