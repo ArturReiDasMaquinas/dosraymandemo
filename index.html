@@ -51,7 +51,7 @@
             margin-bottom: 20px;
         }
 
-        /* Container do Emulador (Proporção clássica 4:3) */
+        /* Container do Emulador (Proporção 4:3) */
         .emulator-wrapper {
             width: 800px;
             height: 600px;
@@ -83,7 +83,7 @@
             height: 100%;
         }
 
-        /* Oculta as barras e botões nativos do JS-DOS para manter o visual limpo */
+        /* Oculta as barras nativas poluídas do JS-DOS */
         .jsdos-footer, .jsdos-header, .jsdos-sidebar {
             display: none !important;
         }
@@ -98,14 +98,7 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            cursor: pointer;
-            transition: opacity 0.3s ease;
-        }
-
-        #start-overlay:hover .start-btn {
-            background-color: #ffcc00;
-            color: #0f0f12;
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+            transition: all 0.3s ease;
         }
 
         .start-btn {
@@ -118,8 +111,15 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             border-radius: 8px;
+            cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .start-btn:hover {
+            background-color: #ffcc00;
+            color: #0f0f12;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
         }
 
         .start-hint {
@@ -128,6 +128,16 @@
             margin-top: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Animação simples de piscar estilo Arcade */
+        .blinking {
+            animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0.3; }
         }
     </style>
 </head>
@@ -138,9 +148,9 @@
         <div class="subtitle">MS-DOS Demo Version Preservation</div>
 
         <div class="emulator-wrapper">
-            <div id="start-overlay" onclick="iniciarJogo()">
-                <button class="start-btn">🕹️ INICIAR DEMO</button>
-                <div class="start-hint">Clique para carregar o emulador sem travas</div>
+            <div id="start-overlay">
+                <button class="start-btn" id="main-btn" onclick="iniciarJogo()">🕹️ INICIAR DEMO</button>
+                <div class="start-hint" id="hint-text">Clique para rodar o emulador DOSBox</div>
             </div>
 
             <div id="game"></div>
@@ -149,15 +159,37 @@
 
     <script>
         function iniciarJogo() {
-            // Remove a tela de boot inicial
-            document.getElementById('start-overlay').style.display = 'none';
+            const btn = document.getElementById('main-btn');
+            const hint = document.getElementById('hint-text');
             
-            // Inicializa o motor JS-DOS apontando para os arquivos livres da Cloudflare
+            // Muda o layout do botão para indicar o progresso do download
+            btn.removeAttribute('onclick');
+            btn.style.backgroundColor = '#16161a';
+            btn.style.color = '#888893';
+            btn.style.border = '2px solid #2c2c35';
+            btn.style.cursor = 'default';
+            btn.classList.add('blinking');
+            btn.innerText = '⏳ CARREGANDO JOGO...';
+            hint.innerHTML = 'Baixando "rayman_demo.zip" e compilando WebAssembly.<br>Por favor, aguarde alguns segundos.';
+
+            // Inicializa o motor JS-DOS
             Dos(document.getElementById("game"), {
                 wdosboxUrl: "https://cdnjs.cloudflare.com/ajax/libs/js-dos/6.22.1/wdosbox.js"
             }).then(function (runtime) {
-                // Baixa o seu zip e roda o executável RAYMAN.EXE automaticamente
+                // Executa o zip e caça o executável
                 runtime.boot("rayman_demo.zip", ["RAYMAN.EXE"]);
+                
+                // Remove a tela de aviso após dar tempo do DOSBox iniciar a renderização gráfica
+                setTimeout(() => {
+                    document.getElementById('start-overlay').style.display = 'none';
+                }, 2500);
+            }).catch(function(err) {
+                btn.classList.remove('blinking');
+                btn.style.color = '#ff3333';
+                btn.style.border = '2px solid #ff3333';
+                btn.innerText = '❌ ERRO AO CARREGAR';
+                hint.innerText = 'Verifique se o arquivo rayman_demo.zip está na pasta correta.';
+                console.error(err);
             });
         }
     </script>
